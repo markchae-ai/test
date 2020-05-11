@@ -12,7 +12,7 @@ class dt(): #doctor as dt
     file_name = ''
     
     audio_mp3 = AudioSegment.empty()
-    audio_mono = AudioSegment.empty()
+    #audio_mono = AudioSegment.empty()
     noise_profile_segment = AudioSegment.empty()
         
     audio_array = []
@@ -53,26 +53,27 @@ def file_open(path_input,data_type):
     dt.info_user['file_rms'] = dt.audio_mp3.rms
 
 def get_array(value):
-    dt.audio_mono = value
+    audio_orig = value
     dt.audio_array = value.get_array_of_samples()
     dt.audio_array_float32 = np.array(dt.audio_array).astype(np.float32)
     noise_detect()
 
 def get_array_noise(): #어레이 추출, 채널 분리, 노이즈 디텍팅
     dt.info_audio = []
-    audio_norm = effects.normalize(dt.audio_mp3, -1.0)
+    audio_orig = effects.normalize(dt.audio_mp3, -1.0)
 
     if dt.info_user['file_channels'] == 1: #mono파일
-        get_array(audio_norm)
-        dt.info_audio.append([dt.audio_mono,dt.audio_array,dt.audio_array_float32, dt.noise_profile])
+        get_array(audio_orig)
+        dt.info_audio.append([audio_orig,dt.audio_array,dt.audio_array_float32, dt.noise_profile])
         dt.audio_info.append([dt.audio_array_float32,dt.noise_profile])
     else: #stereo 파일
-        ch = audio_norm.split_to_mono()
+        ch = audio_orig.split_to_mono()
         for i in ch:
             get_array(i)
-            dt.info_audio.append([dt.audio_mono,dt.audio_array,dt.audio_array_float32, dt.noise_profile])
+            dt.info_audio.append([audio_orig,dt.audio_array,dt.audio_array_float32, dt.noise_profile])
             dt.audio_info.append([dt.audio_array_float32,dt.noise_profile])
     #dt.all_dic['audio_info'] = dt.audio_info
+    audio_orig=[]
 
 def noise_detect():
     # 사용 변수
@@ -97,7 +98,7 @@ def noise_detect():
                     break
             starting_point = i * 10
             end_point = (i + offset + 49) * 10
-            dt.noise_profile_segment = dt.audio_mono[starting_point:end_point]
+            dt.noise_profile_segment = audio_orig[starting_point:end_point]
             
             if npf_check == False:
                 dt.noise_profile = np.array(dt.noise_profile_segment.get_array_of_samples()).astype(np.float32)                
@@ -127,9 +128,9 @@ def noise_detect():
         range_count += 1
     
     for i in noise_range:
-        noise_rms = noise_rms + dt.audio_mono[i[0]:i[1]].rms
+        noise_rms = noise_rms + audio_orig[i[0]:i[1]].rms
     for i in voice_range:
-        voice_rms = voice_rms + dt.audio_mono[i[0]:i[1]].rms
+        voice_rms = voice_rms + audio_orig[i[0]:i[1]].rms
 
     dt.info_section['noise_section'] = noise_range
     dt.info_section['voice_section'] = voice_range
@@ -173,17 +174,17 @@ def stereo_judgement():
 
 def phase_judgement():
     if dt.info_developer['phase'] != 'no':
-        left = dt.info_audio[0][1]
-        right = dt.info_audio[1][1]
+        #left = dt.info_audio[0][1]
+        #right = dt.info_audio[1][1]
         invert_count = []
         invert_section = []
         offset=0
         point=0
         sec =100
         a=0
-        while a<len(left)/sec: #역상 위치파악
-            phase_left =np.sum(left[a*sec:a*sec+sec])
-            phase_right =np.sum(right[a*sec:a*sec+sec])
+        while a<len(dt.info_audio[0][1])/sec: #역상 위치파악
+            phase_left =np.sum(dt.info_audio[0][1][a*sec:a*sec+sec])
+            phase_right =np.sum(dt.info_audio[1][1][a*sec:a*sec+sec])
             phase_sum = phase_left+phase_right
             if abs(phase_sum)*2< (np.fabs(phase_left)+np.fabs(phase_right))/2:
                 invert_count.append(1)
