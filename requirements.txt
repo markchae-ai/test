@@ -1,0 +1,8 @@
+numba==0.48.0
+ffmpeg-normalize==1.18.2
+librosa==0.7.2
+noisereduce==1.1.0
+numpy==1.18.3
+pydub==0.23.1
+python-speech-features==0.6
+google-cloud-storage>=1.15.0
